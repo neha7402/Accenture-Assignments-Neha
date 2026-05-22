@@ -177,16 +177,9 @@ db.products.deleteMany({})
 
 Projection & Filtering:
 
-db.products.find(
-  {},
-  { name: 1, price: 1 }
-)
+db.products.find({},{ name: 1, price: 1 })
 
-
-db.products.find(
-  {},
-  { _id: 0, name: 1, price: 1 }
-)
+db.products.find({},{ _id: 0, name: 1, price: 1 })
 
 
 Limit & Pagination:
