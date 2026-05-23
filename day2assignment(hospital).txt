@@ -1,0 +1,129 @@
+1) 
+db.patients.aggregate([
+  {$match: { treatmentCost: { $gt: 20000 } }},
+  {$project: { _id: 0,patientName: 1, department: 1} }
+])
+
+
+2)
+db.patients.aggregate([
+  {
+    $sort: { treatmentCost: -1 }
+  }
+])
+
+
+3)
+db.patients.aggregate([{$limit: 5}])
+
+
+4)
+db.patients.aggregate([ {$skip: 3} ])
+
+
+5)
+db.patients.aggregate([
+  {
+    $match: { department: "Cardiology" }
+  },
+  {
+    $project: {_id: 0,patientName: 1
+    }
+  }
+])
+
+
+6)
+db.patients.aggregate([
+  {
+    $group: {
+      _id: "$department",
+      totalTreatmentCost: { $sum: "$treatmentCost" }
+    }
+  }
+])
+
+
+7)
+db.patients.aggregate([
+  {$group: { _id: "$doctor",averageTreatmentCost: { $avg: "$treatmentCost" }}
+  },
+  {$sort: { averageTreatmentCost: 1 }}
+])
+
+
+8)
+db.patients.aggregate([
+  {$group: {_id: "$department",totalTreatmentCost: { $sum: "$treatmentCost" }}
+  },
+  {$match: {totalTreatmentCost: { $gt: 50000 }}
+  }
+])
+
+
+9)
+db.patients.aggregate([
+  {$group: {_id: "$department",patientCount: { $sum: 1 } }
+  },
+  {$sort: { patientCount: -1 }}
+])
+
+
+10)
+db.patients.aggregate([
+  {$group: { _id: "$doctor",totalTreatmentCost: { $sum: "$treatmentCost" } }
+  },
+  { $sort: { totalTreatmentCost: -1 }
+  },
+  { $limit: 3 }
+])
+
+
+11)
+db.patients.aggregate([
+  {$match: {age: { $gt: 40 } }
+  },
+  { $group: { _id: "$department",patientCount: { $sum: 1 } }
+  }
+])
+
+
+12)
+db.patients.aggregate([
+  {$group: { _id: "$department",averageCost: { $avg: "$treatmentCost" }}
+  },
+  {$project: { _id: 0,department: "$_id",averageCost: 1}
+  },
+  { $sort: { averageCost: -1 } }
+])
+
+
+13)
+db.patients.aggregate([
+  {$group: { _id: "$department", patientCount: { $sum: 1 } }
+  },
+  {$match: { patientCount: { $gt: 2 } }
+  }
+])
+
+
+14)
+db.patients.aggregate([
+  {$group: { _id: "$department", totalTreatmentCost: { $sum: "$treatmentCost" }}
+  },
+  { $sort: { totalTreatmentCost: -1 }
+  },
+  { $skip: 1 },
+  {$limit: 3}
+  ])
+
+
+15)
+db.patients.aggregate([
+  {$match: {treatmentCost: { $gt: 10000 }}
+  },
+  { $group: {_id: "$doctor",totalTreatmentCost: { $sum: "$treatmentCost" }}
+  },
+  { $sort: { totalTreatmentCost: -1 }},
+  {$limit: 2}
+])
