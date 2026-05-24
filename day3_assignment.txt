@@ -1,0 +1,239 @@
+CASE STUDY 1
+
+use onlineshoppingDB
+
+db.orders.insertMany([
+  {
+    customer_id: "C101",
+    name: "Asha",
+    items: [
+      { product: "Mobile", price: 15000 },
+      { product: "Earphones", price: 2000 }
+    ]
+  },
+  {
+    customer_id: "C102",
+    name: "Kiran",
+    items: [
+      { product: "Mobile", price: 15000 },
+      { product: "Laptop", price: 50000 }
+    ]
+  },
+  {
+    customer_id: "C103",
+    name: "Neha",
+    items: [
+      { product: "Earphones", price: 2000 },
+      { product: "Laptop", price: 50000 }
+    ]
+  }
+])
+
+
+
+1)
+
+([
+  { $unwind: "$items" },
+  {$match: {"items.product": "Mobile", "items.price": { $gte: 15000 } }
+  },
+  { $group: {
+      _id: "$items.product",
+      totalCustomers: { $sum: 1 },
+      totalRevenue: { $sum: "$items.price" },
+      averagePrice: { $avg: "$items.price" },
+      minimumPrice: { $min: "$items.price" },
+      maximumPrice: { $max: "$items.price" },
+      customerNames: { $addToSet: "$name" },
+      firstCustomer: { $first: "$name" }
+    }
+  },
+  { $out: "mobile_report"}
+])
+
+
+
+2)
+
+db.orders.aggregate([
+  { $unwind: "$items" },
+  {$match: { "items.price": { $gte: 15000 },"items.product": { $in: ["Mobile", "Laptop"] }}
+  },
+  {$group: {
+      _id: "$items.product",
+      totalOrders: { $sum: 1 },
+      totalRevenue: { $sum: "$items.price" },
+      averagePrice: { $avg: "$items.price" },
+      minimumPrice: { $min: "$items.price" },
+      maximumPrice: { $max: "$items.price" },
+      customerList: { $addToSet: "$name" }
+    }
+  },
+  {$out: "high_value_products_report"}
+])
+
+
+
+3)
+
+db.orders.aggregate([
+  { $unwind: "$items" },
+  { $group: {
+      _id: "$customer_id",
+      customerName: { $first: "$name" },
+      totalAmountSpent: { $sum: "$items.price" },
+      averagePrice: { $avg: "$items.price" },
+      minimumPrice: { $min: "$items.price" },
+      maximumPrice: { $max: "$items.price" },
+      productList: { $addToSet: "$items.product" },
+      productCount: { $sum: 1 }}
+  },
+  { $match: { productCount: { $gt: 1 }, totalAmountSpent: { $gte: 30000 }}
+  },
+  { $out: "customer_spending_report"}
+])
+
+
+
+
+CASE STUDY 2
+
+Collection 1: customers:
+
+db.customers.insertMany([
+{
+  _id: 1,
+  name: "Arun",
+  profile: { age: 25, city: "Chennai" }   
+},
+{
+  _id: 2,
+  name: "Priya",
+  profile: { age: 22, city: "Bangalore" }
+},
+{
+  _id: 3,
+  name: "Rahul",
+  profile: { age: 30, city: "Hyderabad" }
+},
+{
+  _id: 4,
+  name: "Neha",
+  profile: { age: 28, city: "Mumbai" }
+},
+{
+  _id: 5,
+  name: "Kiran",
+  profile: { age: 35, city: "Pune" }
+}
+])
+
+
+db.movies.insertMany([
+{ _id: "M1", title: "Inception", genre: "Sci-Fi", price: 300 },
+{ _id: "M2", title: "Avatar", genre: "Fantasy", price: 350 },
+{ _id: "M3", title: "Interstellar", genre: "Sci-Fi", price: 400 }
+])
+
+
+db.bookings.insertMany([
+{ _id: 301, customer_id: 1, movie_id: "M1", show_date: "2026-02-01" },
+{ _id: 302, customer_id: 1, movie_id: "M2", show_date: "2026-02-03" },
+{ _id: 303, customer_id: 2, movie_id: "M1", show_date: "2026-02-05" },
+{ _id: 304, customer_id: 3, movie_id: "M3", show_date: "2026-02-06" },
+{ _id: 305, customer_id: 3, movie_id: "M1", show_date: "2026-02-08" },
+{ _id: 306, customer_id: 4, movie_id: "M2", show_date: "2026-02-10" },
+{ _id: 307, customer_id: 5, movie_id: "M3", show_date: "2026-02-12" },
+{ _id: 308, customer_id: 5, movie_id: "M2", show_date: "2026-02-14" }
+])
+
+
+
+1)
+db.bookings.aggregate([
+  {$group: {_id: "$movie_id",total_bookings: { $sum: 1 }} },
+  {$lookup: {
+      from: "movies",
+      localField: "_id",
+      foreignField: "_id",
+      as: "movie" } },
+  { $unwind: "$movie"},
+  { $project: {_id: 0, movie: "$movie.title",total_bookings: 1 }}
+])
+
+
+
+2)
+db.bookings.aggregate([
+  { $lookup: {
+      from: "movies",
+      localField: "movie_id",
+      foreignField: "_id",
+      as: "movie"}},
+  { $unwind: "$movie" },
+  { $group: {
+      _id: "$movie.title",
+      total_tickets_sold: { $sum: 1 },
+      total_revenue: { $sum: "$movie.price" },
+      average_ticket_price: { $avg: "$movie.price" },
+      minimum_ticket_price: { $min: "$movie.price" },
+      maximum_ticket_price: { $max: "$movie.price" }} }
+])
+
+
+
+3)
+db.bookings.aggregate([
+  {$lookup: {from: "customers",localField: "customer_id", foreignField: "_id", as: "customer" }
+  },
+  {$unwind: "$customer" },
+  {$lookup: {from: "movies",localField: "movie_id",foreignField: "_id",as: "movie"}
+  },
+  {$unwind: "$movie"},
+  {$group: {
+      _id: "$customer.name",
+      number_of_movies_booked: { $sum: 1 },
+      total_amount_spent: { $sum: "$movie.price" },
+      average_spending: { $avg: "$movie.price" },
+      movies_watched: { $push: "$movie.title" }
+  } }
+])
+
+
+
+4)
+db.bookings.aggregate([
+  {$group: {_id: "$customer_id",total_bookings: { $sum: 1 } }},
+  {$match: { total_bookings: { $gt: 1 } }},
+  {$lookup: {from: "customers",localField: "_id",foreignField: "_id",as: "customer" }},
+  {$unwind: "$customer" },
+  {$project: {_id: 0, customer_name: "$customer.name",total_bookings: 1 }}
+])
+
+
+
+5)
+db.bookings.aggregate([
+  {$lookup: {
+      from: "movies",
+      localField: "movie_id",
+      foreignField: "_id",
+      as: "movie"} },
+  {$unwind: "$movie" },
+  {$group: { _id: "$movie.genre",total_bookings: { $sum: 1 } }},
+  {$sort: {total_bookings: -1}}
+])
+
+
+
+6)
+db.bookings.aggregate([
+  {$lookup: { from: "movies",localField: "movie_id",foreignField: "_id",as: "movie" }},
+  {$unwind: "$movie" },
+  {$lookup: {from: "customers",localField: "customer_id",foreignField: "_id",as: "customer"}},
+  {$unwind: "$customer"},
+  {$group: {
+      _id: "$movie.title",
+      total_bookings: { $sum: 1 },
+      customers: { $push: "$customer.name" } } }
+])
