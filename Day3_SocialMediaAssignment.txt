@@ -1,0 +1,226 @@
+Social Media Platform Case Study Assignment
+
+mongod --replSet rs0 --port 27017 --dbpath .\data\db1
+mongod --replSet rs0 --port 27018 --dbpath .\data\db2
+mongod --replSet rs0 --port 27019 --dbpath .\data\db3
+
+
+mongosh --port 27017
+
+1)setupReplica.js
+
+rs.initiate({
+  _id: "rs0",
+  members: [
+    { _id: 0, host: "localhost:27017" },
+    { _id: 1, host: "localhost:27018" },
+    { _id: 2, host: "localhost:27019" }
+  ]
+})
+
+
+mongosh --port 27017 scripts/setupReplica.js
+
+
+
+2)insertUsers.js
+
+use("socialMediaDB")
+
+db.users.insertMany([
+  {
+    userId: "U101",
+    username: "aaa",
+    email: "aaa@example.com",
+    bio: "Travel Blogger",
+    followersCount: 120,
+    followingCount: 80,
+    createdAt: new Date()
+  },
+  {
+    userId: "U102",
+    username: "bbb",
+    email: "bbb@example.com",
+    bio: "Food Lover",
+    followersCount: 300,
+    followingCount: 150,
+    createdAt: new Date()
+  }
+])
+
+print("Users inserted successfully")
+
+mongosh --port 27017 scripts/insertUsers.js
+
+
+3) insertPosts.js
+
+use("socialMediaDB")
+
+db.posts.insertMany([
+  {
+    postId: "P101",
+    userId: "U101",
+    caption: "Beautiful sunset!",
+    hashtags: ["travel", "sunset"],
+    likesCount: 45,
+    createdAt: new Date()
+  },
+  {
+    postId: "P102",
+    userId: "U102",
+    caption: "Delicious pasta",
+    hashtags: ["food", "pasta"],
+    likesCount: 78,
+    createdAt: new Date()
+  }
+])
+
+print("Posts inserted successfully")
+
+mongosh --port 27017 scripts/insertPosts.js
+
+
+
+4)insertComments.js
+
+use("socialMediaDB")
+
+db.comments.insertMany([
+  {
+    commentId: "C101",
+    postId: "P101",
+    userId: "U102",
+    commentText: "Amazing picture!",
+    commentedAt: new Date()
+  },
+  {
+    commentId: "C102",
+    postId: "P102",
+    userId: "U101",
+    commentText: "Looks delicious!",
+    commentedAt: new Date()
+  }
+])
+
+print("Comments inserted successfully")
+
+mongosh --port 27017 scripts/insertComments.js
+
+
+5) insertFollowers.js
+
+use("socialMediaDB")
+
+db.followers.insertMany([
+  {
+    followId: "F101",
+    followerId: "U102",
+    followingId: "U101",
+    followedAt: new Date()
+  },
+  {
+    followId: "F102",
+    followerId: "U101",
+    followingId: "U102",
+    followedAt: new Date()
+  }
+])
+
+print("Followers inserted successfully")
+
+mongosh --port 27017 scripts/insertFollowers.js
+
+
+6)insertActivityLogs.js
+
+use("socialMediaDB")
+
+db.activity_logs.insertMany([
+  {
+    activityId: "A101",
+    userId: "U101",
+    activityType: "Login",
+    device: "Mobile",
+    activityTime: new Date()
+  },
+  {
+    activityId: "A102",
+    userId: "U102",
+    activityType: "Post",
+    device: "Laptop",
+    activityTime: new Date()
+  }
+])
+
+print("Activity logs inserted successfully")
+
+mongosh --port 27017 scripts/insertActivityLogs.js
+
+
+7)checkData.js
+
+use("socialMediaDB")
+
+print("===== USERS =====")
+printjson(db.users.find().toArray())
+
+print("===== POSTS =====")
+printjson(db.posts.find().toArray())
+
+print("===== COMMENTS =====")
+printjson(db.comments.find().toArray())
+
+print("===== FOLLOWERS =====")
+printjson(db.followers.find().toArray())
+
+print("===== ACTIVITY LOGS =====")
+printjson(db.activity_logs.find().toArray())
+
+mongosh --port 27017 scripts/checkData.js
+
+
+8)updateData.js
+
+use("socialMediaDB")
+
+
+db.users.updateOne(
+  { userId: "U101" },
+  { $set: { bio: "Adventure Traveler" } }
+)
+
+db.posts.updateOne(
+  { postId: "P101" },
+  { $set: { caption: "Sunset at beach!" } }
+)
+
+
+db.posts.updateOne(
+  { postId: "P101" },
+  { $inc: { likesCount: 1 } }
+)
+
+print("Data Updated Successfully")
+
+
+9)deleteData.js
+
+use("socialMediaDB")
+
+db.users.deleteOne({ userId: "U102" })
+
+db.comments.deleteOne({ commentId: "C101" })
+
+db.posts.deleteOne({ postId: "P102" })
+
+print("Data Deleted Successfully")
+
+
+
+10) failoverDemo.js
+
+mongosh --port 27017
+rs.status()
+
+
